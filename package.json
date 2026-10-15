@@ -1,0 +1,13 @@
+{
+  "name": "typing-lab-kien",
+  "version": "2.4.1",
+  "private": true,
+  "scripts": {
+    "build": "node scripts/build.cjs",
+    "test": "node scripts/test.cjs",
+    "check": "node --check src/core.js && node scripts/test.cjs"
+  },
+  "devDependencies": {
+    "linkedom": "0.18.12"
+  }
+}

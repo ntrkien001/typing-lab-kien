@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="description" content="Luyện gõ tiếng Hàn, phân tích tệp HTML và kiểm tra số liệu mô phỏng. Chạy hoàn toàn trên trình duyệt." />
+  <meta name="theme-color" content="#0c1423" />
+  <title>Typing Lab Pro 2.4.1</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="wrap">
+    <span class="pill">LOCAL-FIRST · PRO 2.4.1</span>
+    <h1>⌨️ Typing Lab Pro</h1>
+    <p>Luyện gõ tiếng Hàn, phân tích tệp và kiểm tra số liệu mô phỏng.</p>
+
+    <nav class="tabs" role="tablist" aria-label="Khu vực chức năng">
+      <button role="tab" id="tab-practice" aria-controls="practice" aria-selected="true" data-tab="practice" class="active">Luyện gõ thật</button>
+      <button role="tab" id="tab-history" aria-controls="history" aria-selected="false" tabindex="-1" data-tab="history">Lịch sử &amp; tiến bộ</button>
+      <button role="tab" id="tab-editor" aria-controls="editor" aria-selected="false" tabindex="-1" data-tab="editor">Chỉnh file HTML</button>
+      <button role="tab" id="tab-demo" aria-controls="demo" aria-selected="false" tabindex="-1" data-tab="demo">Mô phỏng</button>
+    </nav>
+
+    <!-- ===== Practice ===== -->
+    <section id="practice" class="view active" role="tabpanel" aria-labelledby="tab-practice">
+      <div class="stats">
+        <div class="card"><span>Thời gian</span><b id="t">00:00</b></div>
+        <div class="card"><span>타 ước tính/phút · văn bản đúng</span><b id="s">0</b></div>
+        <div class="card"><span>Độ chính xác</span><b id="a">100%</b></div>
+        <div class="card"><span>Tiến độ</span><b id="p">0%</b></div>
+      </div>
+
+      <div class="panel">
+        <div class="rowbetween">
+          <h2>Bài luyện</h2>
+          <button id="reset">Làm lại</button>
+        </div>
+        <label for="custom">Nhập bài riêng (mỗi dòng một câu)</label>
+        <textarea id="custom" placeholder="Để trống để dùng bài mẫu"></textarea>
+        <button id="apply">Dùng bài này</button>
+
+        <div class="bar" style="margin-top:17px"><div id="fill"></div></div>
+        <p id="count">Câu 1 / 15</p>
+
+        <div class="miniStats" aria-hidden="true">
+          <span>⏱ <b id="mt">00:00</b></span><span>⚡ <b id="ms">0 타</b></span><span>🎯 <b id="ma">100%</b></span>
+        </div>
+
+        <div class="sample" id="source" lang="ko"></div>
+        <input id="typing" lang="ko" type="text" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" aria-label="Ô nhập câu tiếng Hàn" placeholder="Nhập câu tiếng Hàn..." />
+        <p id="tip">Gõ hết câu rồi nhấn phím cách hoặc Enter để sang câu tiếp.</p>
+
+        <div class="kbWrap">
+          <div class="rowbetween">
+            <small>Bàn phím 두벌식 · phím cần gõ tiếp được tô sáng</small>
+            <label class="check inline"><input type="checkbox" id="kbToggle" checked /> Hiện bàn phím</label>
+          </div>
+          <div id="keyboard" class="keyboard"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Biểu đồ tốc độ</h2>
+        <canvas id="chart" role="img" aria-label="Biểu đồ tốc độ gõ theo thời gian của phiên hiện tại"></canvas>
+      </div>
+
+      <div class="panel hidden" id="completion" role="status" aria-live="polite"></div>
+    </section>
+
+    <!-- ===== History ===== -->
+    <section id="history" class="view" role="tabpanel" aria-labelledby="tab-history">
+      <div class="panel">
+        <h2>Tiến bộ theo ngày</h2>
+        <canvas id="progress" role="img" aria-label="Biểu đồ tốc độ gõ tốt nhất mỗi ngày"></canvas>
+        <p id="progressLabel" class="muted"></p>
+      </div>
+      <div class="panel">
+        <div class="rowbetween">
+          <h2>Lịch sử trên thiết bị</h2>
+          <span><button id="savecsv">Xuất CSV</button> <button id="clear">Xóa lịch sử</button></span>
+        </div>
+        <div id="historyList"></div>
+      </div>
+    </section>
+
+    <!-- ===== Editor ===== -->
+    <section id="editor" class="view" role="tabpanel" aria-labelledby="tab-editor">
+      <div class="panel">
+        <h2>Chỉnh file luyện gõ HTML</h2>
+        <label for="file">1. Chọn tệp HTML</label>
+        <input id="file" type="file" accept=".html,.htm" />
+        <p id="fileState" role="status" aria-live="polite">Chưa chọn file.</p>
+        <div id="compatibility"></div>
+
+        <div id="analysis" class="hidden">
+          <h2 style="margin-top:26px">📊 Phân tích nội dung tệp</h2>
+          <div class="stats">
+            <div class="card"><span>Số câu</span><b id="lines">—</b></div>
+            <div class="card"><span>Ký tự có khoảng trắng</span><b id="chars">—</b></div>
+            <div class="card"><span>Ký tự không tính khoảng trắng</span><b id="letters">—</b></div>
+            <div class="card"><span>Ước tính số lần gõ (타)</span><b id="strokes">—</b></div>
+          </div>
+          <p id="sourceInfo"></p>
+          <div class="panel" style="background:#0f2034">
+            <h2>Tính toán tốc độ – thời gian</h2>
+            <label for="unit">Đơn vị tính</label>
+            <select id="unit" aria-label="Đơn vị tính tốc độ">
+              <option value="strokes">타 ước tính/phút (bàn phím 두벌식)</option>
+              <option value="chars">Ký tự/phút (gồm khoảng trắng)</option>
+            </select>
+            <p id="unitInfo" class="muted"></p>
+            <div class="stats" style="grid-template-columns:repeat(2,1fr)">
+              <div class="card"><span>Với tốc độ bạn nhập</span><b id="expectedTime">—</b><small>Thời gian dự kiến</small></div>
+              <div class="card"><span>Với thời gian bạn nhập</span><b id="requiredSpeed">—</b><small>Tốc độ cần thiết / phút</small></div>
+            </div>
+            <p id="checkConsistency"></p>
+            <p class="muted">Các phép tính chỉ giả định tốc độ ổn định và tính từ văn bản mục tiêu. Chúng không xác minh tốc độ hay lịch sử thao tác thật, cũng không xác định một người cụ thể gõ nhanh đến đâu.</p>
+            <label for="referenceSpeed">Tốc độ tham chiếu / phút</label>
+            <input id="referenceSpeed" type="number" value="220" min="1" max="2000" aria-label="Tốc độ tham chiếu mỗi phút" />
+            <button style="margin-top:12px" id="suggest">Tính thời gian từ tốc độ tham chiếu</button>
+            <p class="muted">Nên sử dụng tốc độ trung bình đo được qua các lần luyện thật của chính bạn. Giá trị mặc định chỉ minh họa.</p>
+          </div>
+        </div>
+
+        <h2 style="margin-top:24px">2. Chỉnh thông số</h2>
+        <div class="check"><input type="checkbox" id="simulate" /><label for="simulate">Dùng kết quả mô phỏng ở màn hoàn thành</label></div>
+        <div class="grid" id="settings">
+          <div><label for="em">Phút</label><input id="em" type="number" value="7" min="0" max="999" aria-label="Phút" /></div>
+          <div><label for="es">Giây</label><input id="es" type="number" value="36" min="0" max="59" aria-label="Giây" /></div>
+          <div><label for="ev">Tốc độ / phút</label><input id="ev" type="number" value="324" min="1" max="2000" aria-label="Tốc độ mỗi phút" /></div>
+          <div><label for="ea">Độ chính xác (%)</label><input id="ea" type="number" value="100" min="0" max="100" aria-label="Độ chính xác phần trăm" /></div>
+          <div><label for="condition">Qua câu</label><select id="condition" aria-label="Điều kiện qua câu"><option value="strict">Nhập đúng</option><option value="length">Đủ ký tự</option></select></div>
+          <div><label for="copy">Copy/dán</label><select id="copy" aria-label="Chính sách copy dán"><option value="yes">Cho phép</option><option value="original">Giữ theo file gốc</option></select></div>
+        </div>
+        <div class="check"><input type="checkbox" id="assist" /><label for="assist">Hỗ trợ tự điền câu (trình diễn)</label></div>
+        <div id="assistOpt" class="hidden"><label for="key">Chọn phím</label><select id="key" aria-label="Phím tự điền"><option>F8</option><option>F6</option><option>F7</option><option>F9</option><option>F10</option></select></div>
+
+        <div class="preview">
+          <small>🎉 XEM TRƯỚC MÀN HÌNH KẾT QUẢ</small>
+          <h2 style="margin:12px" lang="ko">타자 연습 완료!</h2>
+          <div class="stats">
+            <div class="card"><span lang="ko">걸린 시간</span><b id="pt">07:36</b></div>
+            <div class="card"><span lang="ko">평균 타수</span><b id="pv">324타</b></div>
+            <div class="card"><span lang="ko">정확도</span><b id="pa">100%</b></div>
+          </div>
+          <p class="muted">Xem trước · dữ liệu mô phỏng</p>
+        </div>
+        <div class="warn">Kết quả cố định là số liệu mô phỏng phục vụ thử giao diện, không phải thành tích gõ thực tế. Nhãn chế độ luôn được gắn vào file xuất và không thể gỡ bỏ.</div>
+        <div class="actions">
+          <button id="tryLesson" disabled>Xem thử bài</button>
+          <button id="useLesson" disabled>Đưa sang luyện gõ</button>
+          <button id="restoreSettings">Khôi phục cấu hình</button>
+        </div>
+        <p id="settingsStatus" class="muted" role="status"></p>
+
+        <section id="lessonPreview" class="hidden">
+          <h2>Xem thử nội dung</h2>
+          <p class="muted">Giao diện xem thử chuẩn. Mã JavaScript của file tải lên không được chạy trong phần xem thử này.</p>
+          <iframe title="Xem thử bài luyện gõ" id="lessonFrame" sandbox="allow-scripts" referrerpolicy="no-referrer"></iframe>
+        </section>
+        <button style="margin-top:16px" id="export" disabled>Xuất HTML đã chỉnh</button>
+        <p id="status" role="status" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <!-- ===== Demo ===== -->
+    <section id="demo" class="view" role="tabpanel" aria-labelledby="tab-demo">
+      <div class="panel">
+        <h2>Kết quả mô phỏng độc lập</h2>
+        <div class="grid">
+          <div><label for="dm">Thời gian (giây)</label><input id="dm" type="number" value="456" aria-label="Thời gian giây" /></div>
+          <div><label for="dv">Tốc độ (타/phút)</label><input id="dv" type="number" value="324" aria-label="Tốc độ" /></div>
+          <div><label for="da">Chính xác</label><input id="da" type="number" value="100" aria-label="Độ chính xác" /></div>
+        </div>
+        <div class="preview">
+          <small>MÔ PHỎNG</small>
+          <div class="stats">
+            <div class="card"><span>Thời gian</span><b id="dtime">07:36</b></div>
+            <div class="card"><span>Tốc độ</span><b id="dspeed">324타</b></div>
+            <div class="card"><span>Chính xác</span><b id="dacc">100%</b></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modules load in dependency order. Acorn is loaded on demand by lesson.js. -->
+  <script defer src="src/core.js"></script>
+  <script defer src="src/hangul.js"></script>
+  <script defer src="src/keyboard.js"></script>
+  <script defer src="src/practice.js"></script>
+  <script defer src="src/history.js"></script>
+  <script defer src="src/lesson.js"></script>
+  <script defer src="src/ui.js"></script>
+  <script defer src="src/pwa.js"></script>
+</body>
+</html>
