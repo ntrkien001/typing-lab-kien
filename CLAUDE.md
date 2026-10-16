@@ -2,7 +2,7 @@
 
 ## Context
 - Owner: Kiên. Reply in concise Vietnamese; explain material bugs directly.
-- Current application version: 2.4.1. Public URL: https://typing-lab-kien.vercel.app (2.3 live until 2.4 is deployed).
+- Current application version: 2.4.3. Public URL: https://typing-lab-kien.vercel.app (verify the live version before deploying).
 - Claude is a development assistant. This project has no AI runtime, server, API key, or account system.
 - This archive is a source handoff; it does not grant deployment access or connect the user's Claude account.
 
@@ -32,7 +32,8 @@
 - Stroke estimates use 두벌식 and count compound vowels/finals; Shift is not a separate stroke. Keep character/minute distinct from estimated stroke/minute. Freeze scores when a session completes.
 - Keep old history compatible; distinguish old metrics and sessions containing paste events; never let a corrupted localStorage value throw.
 - Never execute uploaded HTML/JavaScript to extract lesson content. Use Acorn AST + inert DOM parsing. Preview only in the sandboxed iframe; escape dynamic content everywhere (history uses escaped fields).
-- Exports must preserve the original input and carry a mandatory, non-removable mode label. Enabling copy/paste, the length condition, or auto-fill all count as assistance and must be labelled; simulated results must be labelled as simulated. Do not make simulated or assisted output resemble a genuine measured result, and do not remove or weaken these labels.
+- Exports must preserve the original input and layout. Do not insert mode banners or result notes; remove the app's earlier `typingLabMode` and `typingLabResultMode` elements when re-exporting a compatible file. Keep the editor's settings explicit.
+- Preserve both demonstration modes for the selected F6–F10 key: `full` fills the current sentence on one press (the default for older settings); `hold` inserts one Unicode character every 120 ms while held. Release, window blur, hidden tab, or IME composition stops hold mode. Do not fabricate trusted keyboard or hardware IME events.
 
 ## Working style and verification
 - Follow the user's bounded task; inspect relevant source first and make focused edits.

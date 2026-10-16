@@ -134,8 +134,13 @@
           <div><label for="condition">Qua câu</label><select id="condition" aria-label="Điều kiện qua câu"><option value="strict">Nhập đúng</option><option value="length">Đủ ký tự</option></select></div>
           <div><label for="copy">Copy/dán</label><select id="copy" aria-label="Chính sách copy dán"><option value="yes">Cho phép</option><option value="original">Giữ theo file gốc</option></select></div>
         </div>
-        <div class="check"><input type="checkbox" id="assist" /><label for="assist">Hỗ trợ tự điền câu (trình diễn)</label></div>
-        <div id="assistOpt" class="hidden"><label for="key">Chọn phím</label><select id="key" aria-label="Phím tự điền"><option>F8</option><option>F6</option><option>F7</option><option>F9</option><option>F10</option></select></div>
+        <div class="check"><input type="checkbox" id="assist" /><label for="assist">Bật hỗ trợ tự điền (trình diễn)</label></div>
+        <div id="assistOpt" class="hidden">
+          <label for="assistMode">Cách tự điền</label>
+          <select id="assistMode" aria-label="Cách tự điền"><option value="full">Bấm một lần: điền cả câu</option><option value="hold">Giữ phím: nhập từng ký tự</option></select>
+          <label for="key">Chọn phím F6–F10</label><select id="key" aria-label="Phím tự điền"><option value="F8">F8</option><option value="F6">F6</option><option value="F7">F7</option><option value="F9">F9</option><option value="F10">F10</option></select>
+          <p class="muted">Trong file xuất, chọn ô gõ rồi dùng phím đã chọn. Chế độ giữ phím dừng khi nhả phím hoặc chuyển cửa sổ.</p>
+        </div>
 
         <div class="preview">
           <small>🎉 XEM TRƯỚC MÀN HÌNH KẾT QUẢ</small>
@@ -147,7 +152,7 @@
           </div>
           <p class="muted">Xem trước · dữ liệu mô phỏng</p>
         </div>
-        <div class="warn">Kết quả cố định là số liệu mô phỏng phục vụ thử giao diện, không phải thành tích gõ thực tế. Nhãn chế độ luôn được gắn vào file xuất và không thể gỡ bỏ.</div>
+        <p class="muted">File xuất giữ bố cục bài gốc và áp dụng các thông số bạn chọn.</p>
         <div class="actions">
           <button id="tryLesson" disabled>Xem thử bài</button>
           <button id="useLesson" disabled>Đưa sang luyện gõ</button>

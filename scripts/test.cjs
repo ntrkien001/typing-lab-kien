@@ -71,19 +71,30 @@ assert.equal(run('TL.inspect(malicious).nodes[0]'), '정상');
 assert.equal(window.pwned, undefined);
 assert.equal(run('TL.inspect("<div class=source>  한  </div>").nodes[0]'), '한'); // trimmed (bug fix)
 
-// ---- export: simulation + assistance labelling ----
+// ---- export: configured results retain the lesson's layout ----
 context.cfg = { time: '00:30', speed: 200, accuracy: 97, simulate: true, unit: 'strokes', length: true, copy: true, assist: true, key: 'F8' };
 context.output = run('TL.buildExport(fixture,cfg)');
-assert.match(context.output, /Kết quả mô phỏng/);
+const outputDoc = new DOMParser().parseFromString(context.output, 'text/html');
+assert.equal(outputDoc.body.firstElementChild.id, 'time');
+assert.equal(outputDoc.querySelector('#typingLabMode, #typingLabResultMode'), null);
 assert.match(context.output, /typed.length>=text.length/);
 assert.match(context.output, /00:30/);
 assert.equal(run('TL.inspect(output).compatible'), false);
 run('cfg.simulate=false;cfg.length=false;cfg.copy=false;cfg.assist=false');
 assert.match(run('TL.buildExport(fixture,cfg)'), /const r=\/\[}\]\//);
-// copy-only export must now be labelled as assisted (2.3 mislabelled it "Bài luyện")
+// Copy-only exports keep the layout and apply the selected copy setting.
 run('cfg.copy=true');
 const copyOnly = new DOMParser().parseFromString(run('TL.buildExport(fixture,cfg)'), 'text/html');
-assert.match(copyOnly.getElementById('typingLabMode').textContent, /có hỗ trợ/);
+assert.equal(copyOnly.body.firstElementChild.id, 'time');
+assert.equal(copyOnly.querySelector('#typingLabMode, #typingLabResultMode'), null);
+assert.match(copyOnly.querySelector('style').textContent, /user-select:text/);
+// Re-exporting a compatible older file removes the app's previous banners.
+context.olderExport = fixture.replace('<body>', '<body><p id="typingLabMode">Old banner</p>')
+  .replace('<div id="finish">', '<div id="finish"><p id="typingLabResultMode">Old result note</p>');
+assert.equal(run('TL.inspect(olderExport).compatible'), true);
+const reexported = new DOMParser().parseFromString(run('TL.buildExport(olderExport,cfg)'), 'text/html');
+assert.equal(reexported.body.firstElementChild.id, 'time');
+assert.equal(reexported.getElementById('finish').textContent, '');
 
 // ---- editor speed/time calculation ----
 run('TL.uploaded=TL.inspect(fixture);$("unit").value="chars";$("em").value="0";$("es").value="30";TL.preview()');
@@ -139,9 +150,9 @@ assert.doesNotMatch($('historyList').innerHTML, /<img/);
 // ---- standalone preview document is inert, parseable JS ----
 run('acorn.parse(TL.lessonDocument(["</scr"+"ipt><img src=x onerror=alert(1)>"]).match(/<script>([\\s\\S]*?)<\\/script>/)[1],{ecmaVersion:"latest"})');
 
-console.log('PASS: strokes, keyboard map, safe extraction, labelled exports, calc, settings, IME, correction accuracy, space-finalise, invisible-strip, corrupt-history, history-escape, inert preview.');
+console.log('PASS: strokes, keyboard map, safe extraction, export layout, calc, settings, IME, correction accuracy, space-finalise, invisible-strip, corrupt-history, history-escape, inert preview.');
 
-// ---- exported simulation executes and shows the configured, labelled result ----
+// ---- exported HTML executes and shows the configured result ----
 run('cfg.simulate=true;cfg.length=false;cfg.copy=false;cfg.assist=false;cfg.time="00:30";cfg.speed=200;cfg.accuracy=97;cfg.unit="strokes"');
 const out2 = run('TL.buildExport(fixture,cfg)');
 const exported = parseHTML(out2);
@@ -154,8 +165,11 @@ vm.runInContext('check("한글","한글")', exportContext);
 tasks.forEach((fn) => fn());
 assert.equal(exportDoc.getElementById('finalTime').textContent, '00:30');
 assert.equal(exportDoc.getElementById('speed').textContent, '200');
-assert.match(exportDoc.getElementById('finish').textContent, /Kết quả mô phỏng/);
-console.log('PASS: exported HTML executes and presents the configured simulation with a visible, non-removable label.');
+assert.equal(exportDoc.getElementById('finalSpeed').textContent, '200타/phút');
+assert.equal(exportDoc.getElementById('finalAccuracy').textContent, '97%');
+assert.equal(exportDoc.getElementById('finish').children.length, 3);
+assert.equal(exportDoc.querySelector('#typingLabMode, #typingLabResultMode'), null);
+console.log('PASS: exported HTML executes and presents the configured result without added banners or result notes.');
 
 // Invalid individual records must not crash history or session completion.
 memory.set('typinglab_history', JSON.stringify([null, {date:'invalid',metricVersion:2,speed:100}]));
@@ -171,3 +185,109 @@ const legacyDoc = new DOMParser().parseFromString(run('TL.buildExport(legacy,cfg
 assert.equal(legacyDoc.querySelector('meta[charset]').getAttribute('charset'), 'utf-8');
 assert.equal(legacyDoc.querySelector('meta[http-equiv]'), null);
 console.log('PASS: invalid individual history entries, mobile reset metrics, UTF-8 export metadata.');
+
+// ---- held demonstration key in an exported lesson ----
+context.assistFixture = fixture.replace('<body>', '<body><div class="line"><p class="source">한글</p><textarea id="first"></textarea></div><div class="line"><p class="source">가😀</p><textarea id="second"></textarea></div>');
+function heldKeyLesson(key = 'F8', enabled = true, mode = 'hold') {
+  context.assistKey = key;
+  context.assistEnabled = enabled;
+  context.assistMode = mode;
+  const html = run('TL.buildExport(assistFixture,{simulate:false,copy:false,length:false,assist:assistEnabled,key:assistKey,assistMode})');
+  const { window: win, document: doc } = parseHTML(html);
+  const first = doc.getElementById('first'), second = doc.getElementById('second');
+  first.value = second.value = '';
+  let active = first, id = 0;
+  const timers = new Map(), inputs = [];
+  Object.defineProperty(doc, 'activeElement', { get: () => active });
+  Object.defineProperty(doc, 'hidden', { value: false, writable: true });
+  first.addEventListener('input', () => {
+    inputs.push(first.value);
+    if (first.value === '한글') { first.disabled = true; active = second; }
+  });
+  second.addEventListener('input', () => {
+    inputs.push(second.value);
+    if (second.value === '가😀') second.disabled = true;
+  });
+  const ctx = vm.createContext({
+    document: doc, window: win, Event: win.Event, queueMicrotask: (fn) => fn(),
+    setInterval: (fn) => { timers.set(++id, fn); return id; },
+    clearInterval: (timer) => timers.delete(timer),
+  });
+  for (const script of doc.querySelectorAll('script')) vm.runInContext(script.textContent, ctx);
+  const keyEvent = (type, value = key, repeat = false) => {
+    const event = new win.Event(type, { bubbles: true, cancelable: true });
+    Object.assign(event, { key: value, repeat });
+    doc.dispatchEvent(event);
+    return event;
+  };
+  return {
+    win, doc, first, second, timers, inputs, keyEvent,
+    tick: () => [...timers.values()].forEach((fn) => fn()),
+    focus: (element) => { active = element; },
+  };
+}
+for (const key of ['F6', 'F7', 'F8', 'F9', 'F10']) {
+  const demo = heldKeyLesson(key);
+  demo.keyEvent('keydown', 'F5');
+  assert.equal(demo.first.value, '');
+  assert.equal(demo.keyEvent('keydown').defaultPrevented, true);
+  assert.equal(demo.first.value, '한'); // one character, never the whole sentence
+  demo.keyEvent('keydown', key, true);
+  assert.equal(demo.first.value, '한');
+  assert.equal(demo.timers.size, 1); // OS key repeat cannot create extra timers
+  demo.keyEvent('keyup');
+  demo.tick();
+  assert.equal(demo.first.value, '한');
+  assert.equal(demo.timers.size, 0);
+  demo.keyEvent('keydown'); // resumes from the partial sentence
+  assert.equal(demo.first.value, '한글');
+  demo.tick();
+  assert.equal(demo.second.value, '가');
+  demo.tick();
+  assert.equal(demo.second.value, '가😀'); // supplementary Unicode is not split
+  demo.tick();
+  assert.equal(demo.timers.size, 0); // completed/disabled field stops the timer
+  assert.deepEqual(demo.inputs, ['한', '한글', '가', '가😀']);
+}
+for (const interrupt of ['blur', 'hidden', 'composition', 'focus']) {
+  const demo = heldKeyLesson();
+  demo.keyEvent('keydown');
+  if (interrupt === 'blur') demo.win.dispatchEvent(new demo.win.Event('blur'));
+  if (interrupt === 'hidden') { demo.doc.hidden = true; demo.doc.dispatchEvent(new demo.win.Event('visibilitychange')); }
+  if (interrupt === 'composition') demo.first.dispatchEvent(new demo.win.Event('compositionstart', { bubbles: true }));
+  if (interrupt === 'focus') demo.focus(demo.doc.body);
+  demo.tick();
+  assert.equal(demo.first.value, '한');
+  assert.equal(demo.timers.size, 0);
+}
+const mismatch = heldKeyLesson();
+mismatch.first.value = '틀';
+mismatch.keyEvent('keydown');
+assert.equal(mismatch.first.value, '틀');
+assert.equal(mismatch.timers.size, 0);
+const disabledDemo = heldKeyLesson('F8', false);
+disabledDemo.keyEvent('keydown');
+assert.equal(disabledDemo.first.value, '');
+assert.equal(disabledDemo.timers.size, 0);
+for (const mode of ['full', null]) {
+  for (const key of ['F6', 'F7', 'F8', 'F9', 'F10']) {
+    const demo = heldKeyLesson(key, true, mode);
+    demo.keyEvent('keydown');
+    assert.equal(demo.first.value, '한글');
+    assert.equal(demo.second.value, '');
+    assert.equal(demo.timers.size, 0);
+    demo.keyEvent('keydown', key, true);
+    assert.equal(demo.second.value, ''); // holding never fills subsequent fields in full mode
+    demo.keyEvent('keyup');
+    demo.keyEvent('keydown');
+    assert.equal(demo.second.value, '가😀');
+    assert.deepEqual(demo.inputs, ['한글', '가😀']);
+  }
+}
+// The selected mode persists, and old saved configurations retain full mode.
+run('TL.applySettings(TL.defaults);$("assistMode").value="hold";TL.saveSettings();$("assistMode").value="full";TL.applySettings(JSON.parse(localStorage.getItem("typinglab_editor_v23")))');
+assert.equal($('assistMode').value, 'hold');
+run('TL.applySettings({...TL.defaults,assist:true,key:"F6"})');
+assert.equal($('assistMode').value, 'full');
+assert.equal($('key').value, 'F6');
+console.log('PASS: F6–F10 full/hold modes, legacy default, saved settings, release, repeat suppression, resume, Unicode and focus/IME interruption.');

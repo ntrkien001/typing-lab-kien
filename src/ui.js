@@ -32,8 +32,8 @@
   }
 
   // ---- editor: settings persistence ----------------------------------------
-  const settingIds = ['em', 'es', 'ev', 'ea', 'simulate', 'condition', 'copy', 'assist', 'key', 'referenceSpeed', 'unit'];
-  const defaults = { em: '7', es: '36', ev: '324', ea: '100', simulate: false, condition: 'strict', copy: 'yes', assist: false, key: 'F8', referenceSpeed: '220', unit: 'strokes' };
+  const settingIds = ['em', 'es', 'ev', 'ea', 'simulate', 'condition', 'copy', 'assist', 'assistMode', 'key', 'referenceSpeed', 'unit'];
+  const defaults = { em: '7', es: '36', ev: '324', ea: '100', simulate: false, condition: 'strict', copy: 'yes', assist: false, assistMode: 'full', key: 'F8', referenceSpeed: '220', unit: 'strokes' };
   TL.defaults = defaults;
   // Data key is independent of the app version so upgrading to 2.5 keeps settings.
   const SETTINGS_KEY = 'typinglab_editor_v23';
@@ -238,6 +238,7 @@
           length: $('condition').value === 'length',
           copy: $('copy').value === 'yes',
           assist: $('assist').checked,
+          assistMode: $('assistMode').value,
           key: $('key').value,
         };
         const source = TL.buildExport(TL.uploaded.source, cfg);

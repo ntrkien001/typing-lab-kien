@@ -1,6 +1,6 @@
 /* Typing Lab 2.4 service worker — offline-capable, cache-first for the app
  * shell. Bump CACHE when the deployed assets change so clients refresh. */
-const CACHE = 'typinglab-2.4.1';
+const CACHE = 'typinglab-2.4.3';
 const ASSETS = ['./', './index.html', './vendor/acorn.js', './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', (e) => {

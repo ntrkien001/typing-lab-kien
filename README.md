@@ -1,3 +1,16 @@
+# Bản 2.4.3 — 16/10/2026
+
+- Bật hỗ trợ tự điền, chọn phím F6–F10 và một trong hai cách: **bấm một lần để điền cả câu** hoặc **giữ để nhập từng ký tự** (120 ms/ký tự). Nhả phím để dừng chế độ giữ.
+- Giữ nguyên cách bấm một lần của bản cũ; đây cũng là lựa chọn mặc định khi khôi phục cấu hình cũ. Lựa chọn mới được lưu trên thiết bị và áp dụng vào file xuất.
+- Tự chuyển sang ô câu tiếp theo nếu bài gốc chuyển ô sau khi nhập đúng. Dừng khi rời cửa sổ, ẩn tab, bắt đầu nhập bằng IME, hoặc nội dung đã gõ không khớp đầu câu.
+- Đây là tự điền ký tự qua sự kiện `input`, không phải tín hiệu bàn phím phần cứng hay quá trình ghép jamo của bộ gõ Hàn.
+
+# Bản 2.4.2 — 16/10/2026
+
+- Bỏ thông báo chế độ tự chèn ở đầu file HTML xuất và trong màn hình hoàn thành.
+- Khi xuất lại file tương thích từ bản cũ, xóa hai thông báo do ứng dụng đã thêm.
+- Cập nhật hướng dẫn trong phần chỉnh file và cache PWA.
+
 # Kiểm tra và sửa bản 2.4.1 — 15/10/2026
 
 - Sửa test so sánh mảng qua VM context, khai báo TL/$ trong context test, và tình huống hoàn thành bài của test xuất HTML.
@@ -8,9 +21,9 @@
 - Đã chạy đạt: npm test; npm run build. Chưa xác nhận Chromium/IME phần cứng: trình duyệt kiểm thử không tải được trong môi trường này.
 - Chưa triển khai: kết nối Vercel trả 403 với dự án typing-lab-kien; CLI không có đăng nhập.
 
-# Typing Lab 2.4 — mã nguồn
+# Typing Lab 2.4.3 — mã nguồn
 
-Web hiện tại: https://typing-lab-kien.vercel.app (bản đang chạy là 2.3; gói này là 2.4, bạn tự deploy)
+Web đã dùng: https://typing-lab-kien.vercel.app (chưa xác minh được phiên bản trực tuyến trong lần sửa này).
 
 Ứng dụng luyện gõ tiếng Hàn chạy hoàn toàn trên trình duyệt (local-first): không backend, không API key, không tài khoản. Dữ liệu lịch sử và cấu hình lưu trên chính máy bạn.
 
@@ -25,7 +38,7 @@ Web hiện tại: https://typing-lab-kien.vercel.app (bản đang chạy là 2.3
 **Nhập bài từ file HTML (soạn bài cho lớp)**
 - Đọc được file mã hóa **EUC-KR** (tự nhận và chuyển sang UTF-8), thay vì hiện chữ vỡ.
 - Bài lấy từ phần tử `.source` được cắt khoảng trắng thừa nên gõ được.
-- File xuất ra **luôn gắn nhãn chế độ** (mô phỏng / có hỗ trợ) và **không thể gỡ nhãn**. Bản chỉ bật copy/dán nay cũng được báo là "có hỗ trợ" (2.3 dán nhãn sai thành luyện gõ thường).
+- File xuất giữ bố cục bài gốc, áp dụng cấu hình đã chọn và không chèn thêm thông báo chế độ.
 
 **Tính năng học**
 - **Bàn phím 두벌식 trên màn hình**, tô sáng phím cần gõ tiếp theo.

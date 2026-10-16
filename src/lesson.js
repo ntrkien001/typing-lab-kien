@@ -2,7 +2,7 @@
  * Reads an uploaded typing-practice HTML file WITHOUT executing it: lesson text
  * is pulled from the `texts` array via Acorn's AST, or from `.source` elements
  * via inert DOM parsing. Preview runs in a sandboxed iframe. Exports keep the
- * original input and carry a mandatory, non-removable mode label.
+ * original input and layout without adding mode banners or result notes.
  *
  * Acorn is ~240 KB and only this tab needs it, so it is loaded on demand. */
 (function (TL) {
@@ -185,24 +185,8 @@
       style.textContent = 'body,.source{user-select:text!important;-webkit-user-select:text!important}';
       doc.head.appendChild(style);
     }
-    // Mandatory, honest mode label. 2.3 only flagged assistance for length/assist
-    // and MISSED copy-only exports (they were labelled plain practice). Fixed:
-    // enabling copy/paste is assistance too.
-    const assisted = cfg.assist || cfg.length || cfg.copy;
-    const badge = doc.createElement('p');
-    badge.id = 'typingLabMode';
-    badge.textContent = cfg.simulate
-      ? '모의 결과 · Kết quả mô phỏng, không phải kết quả đo thực tế.'
-      : assisted
-      ? '연습 지원 · Bài luyện có hỗ trợ (không phải điều kiện gõ tiêu chuẩn).'
-      : 'Typing Lab · Bài luyện';
-    badge.style.cssText = 'background:#fff4da;color:#644400;padding:12px;font:14px system-ui';
-    doc.body.insertBefore(badge, doc.body.firstChild);
-    if (cfg.simulate) {
-      const note = badge.cloneNode(true);
-      note.id = 'typingLabResultMode';
-      doc.getElementById('finish').appendChild(note);
-    }
+    // Remove the banners older exports added, keeping the lesson's layout.
+    doc.querySelectorAll('#typingLabMode, #typingLabResultMode').forEach((note) => note.remove());
     const helper = doc.createElement('script');
     helper.textContent =
       '(' +
@@ -210,19 +194,54 @@
         document.addEventListener('input', (e) => { if (e.isComposing && e.target.tagName === 'TEXTAREA') e.stopImmediatePropagation(); }, true);
         document.addEventListener('compositionend', (e) => { if (e.target.tagName === 'TEXTAREA') e.target.dispatchEvent(new Event('input', { bubbles: true })); }, true);
         if (options.copy) for (const type of ['copy', 'cut', 'paste', 'contextmenu', 'dragstart']) document.addEventListener(type, (e) => e.stopImmediatePropagation(), true);
-        if (options.assist)
+        if (options.assist) {
+          let held = false, typingTimer = null;
+          const stop = () => {
+            held = false;
+            if (typingTimer !== null) clearInterval(typingTimer);
+            typingTimer = null;
+          };
+          const currentInput = () => {
+            const input = document.activeElement;
+            if (!input || input.tagName !== 'TEXTAREA' || input.disabled || input.readOnly || !input.isConnected) return null;
+            const source = input.closest('.line')?.querySelector('.source');
+            return source ? { input, source } : null;
+          };
+          const typeNext = () => {
+            const current = currentInput();
+            if (!held || !current) return stop();
+            const { input, source } = current;
+            const target = source.textContent.normalize('NFC');
+            const typed = input.value.normalize('NFC');
+            if (!target.startsWith(typed)) return stop();
+            const next = Array.from(target.slice(typed.length))[0];
+            if (next === undefined) return stop();
+            input.value = typed + next;
+            input.setSelectionRange?.(input.value.length, input.value.length);
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+          };
           document.addEventListener('keydown', (e) => {
-            if (e.key !== options.key || e.repeat) return;
-            const a = document.activeElement,
-              box = a?.closest('.line'),
-              node = box?.querySelector('.source');
-            if (!a || a.tagName !== 'TEXTAREA' || a.disabled || !node) return;
+            if (e.key !== options.key || e.isComposing) return;
+            const current = currentInput();
+            if (!current) return;
             e.preventDefault();
-            a.value = node.textContent;
-            a.dispatchEvent(new Event('input', { bubbles: true }));
+            if (held || e.repeat) return;
+            if (options.assistMode !== 'hold') {
+              current.input.value = current.source.textContent;
+              current.input.dispatchEvent(new Event('input', { bubbles: true }));
+              return;
+            }
+            held = true;
+            typingTimer = setInterval(typeNext, 120);
+            typeNext();
           }, true);
+          document.addEventListener('keyup', (e) => { if (e.key === options.key) stop(); }, true);
+          document.addEventListener('compositionstart', stop, true);
+          document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); });
+          window.addEventListener('blur', stop);
+        }
       }.toString() +
-      ')(' + JSON.stringify({ copy: cfg.copy, assist: cfg.assist, key: cfg.key }) + ');';
+      ')(' + JSON.stringify({ copy: cfg.copy, assist: cfg.assist, key: cfg.key, assistMode: cfg.assistMode === 'hold' ? 'hold' : 'full' }) + ');';
     doc.head.insertBefore(helper, doc.head.firstChild);
     for (const s of parseScripts(doc)) if (!s.ast) throw Error('Bản xuất có lỗi cú pháp. Không tải xuống.');
     return '<!doctype html>\n' + doc.documentElement.outerHTML;
