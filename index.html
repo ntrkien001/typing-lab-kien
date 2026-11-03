@@ -129,7 +129,13 @@
         <div class="grid" id="settings">
           <div><label for="em">Phút</label><input id="em" type="number" value="7" min="0" max="999" aria-label="Phút" /></div>
           <div><label for="es">Giây</label><input id="es" type="number" value="36" min="0" max="59" aria-label="Giây" /></div>
-          <div><label for="ev">Tốc độ / phút</label><input id="ev" type="number" value="324" min="1" max="2000" aria-label="Tốc độ mỗi phút" /></div>
+          <div><label for="ev">Tốc độ / phút</label><input id="ev" type="number" value="324" min="1" max="2000" aria-label="Tốc độ mỗi phút" />
+            <div class="actions" id="speedPresets" role="group" aria-label="Chọn nhanh tốc độ mô phỏng">
+              <button type="button" data-speed="150">Noob · 150</button>
+              <button type="button" data-speed="250">Pro · 250</button>
+              <button type="button" data-speed="350">Hack · 350</button>
+            </div>
+          </div>
           <div><label for="ea">Độ chính xác (%)</label><input id="ea" type="number" value="100" min="0" max="100" aria-label="Độ chính xác phần trăm" /></div>
           <div><label for="condition">Qua câu</label><select id="condition" aria-label="Điều kiện qua câu"><option value="strict">Nhập đúng</option><option value="length">Đủ ký tự</option></select></div>
           <div><label for="copy">Copy/dán</label><select id="copy" aria-label="Chính sách copy dán"><option value="yes">Cho phép</option><option value="original">Giữ theo file gốc</option></select></div>

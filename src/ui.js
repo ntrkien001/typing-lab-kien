@@ -142,6 +142,13 @@
       })
     );
     ['em', 'es', 'ev', 'ea'].forEach((id) => $(id).addEventListener('input', preview));
+    $('speedPresets').querySelectorAll('button').forEach((button) => {
+      button.addEventListener('click', () => {
+        $('ev').value = button.dataset.speed;
+        preview();
+        saveSettings();
+      });
+    });
     $('restoreSettings').onclick = () => {
       applySettings(defaults);
       saveSettings();
