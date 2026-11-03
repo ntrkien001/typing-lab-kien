@@ -144,6 +144,8 @@
   }
   TL.lessonDocument = lessonDocument;
 
+  TL.nextAssistKey = (key) => key === 'F10' ? 'F6' : 'F' + (Number(key.slice(1)) + 1);
+
   function buildExport(source, cfg) {
     const doc = new DOMParser().parseFromString(source, 'text/html');
     // Blob exports are UTF-8; discard legacy declarations before serialization.
@@ -221,27 +223,29 @@
             input.dispatchEvent(new Event('input', { bubbles: true }));
           };
           document.addEventListener('keydown', (e) => {
-            if (e.key !== options.key || e.isComposing) return;
+            if ((e.key !== options.key && e.key !== options.holdKey) || e.isComposing) return;
             const current = currentInput();
             if (!current) return;
             e.preventDefault();
-            if (held || e.repeat) return;
-            if (options.assistMode !== 'hold') {
+            if (e.repeat) return;
+            if (e.key === options.key) {
+              stop();
               current.input.value = current.source.textContent;
               current.input.dispatchEvent(new Event('input', { bubbles: true }));
               return;
             }
+            if (held) return;
             held = true;
             typingTimer = setInterval(typeNext, 120);
             typeNext();
           }, true);
-          document.addEventListener('keyup', (e) => { if (e.key === options.key) stop(); }, true);
+          document.addEventListener('keyup', (e) => { if (e.key === options.holdKey) stop(); }, true);
           document.addEventListener('compositionstart', stop, true);
           document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); });
           window.addEventListener('blur', stop);
         }
       }.toString() +
-      ')(' + JSON.stringify({ copy: cfg.copy, assist: cfg.assist, key: cfg.key, assistMode: cfg.assistMode === 'hold' ? 'hold' : 'full' }) + ');';
+      ')(' + JSON.stringify({ copy: cfg.copy, assist: cfg.assist, key: cfg.key, holdKey: cfg.assist ? TL.nextAssistKey(cfg.key) : null }) + ');';
     doc.head.insertBefore(helper, doc.head.firstChild);
     for (const s of parseScripts(doc)) if (!s.ast) throw Error('Bản xuất có lỗi cú pháp. Không tải xuống.');
     return '<!doctype html>\n' + doc.documentElement.outerHTML;

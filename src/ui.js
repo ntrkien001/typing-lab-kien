@@ -32,11 +32,15 @@
   }
 
   // ---- editor: settings persistence ----------------------------------------
-  const settingIds = ['em', 'es', 'ev', 'ea', 'simulate', 'condition', 'copy', 'assist', 'assistMode', 'key', 'referenceSpeed', 'unit'];
-  const defaults = { em: '7', es: '36', ev: '324', ea: '100', simulate: false, condition: 'strict', copy: 'yes', assist: false, assistMode: 'full', key: 'F8', referenceSpeed: '220', unit: 'strokes' };
+  const settingIds = ['em', 'es', 'ev', 'ea', 'simulate', 'condition', 'copy', 'assist', 'key', 'referenceSpeed', 'unit'];
+  const defaults = { em: '7', es: '36', ev: '324', ea: '100', simulate: false, condition: 'strict', copy: 'yes', assist: false, key: 'F8', referenceSpeed: '220', unit: 'strokes' };
   TL.defaults = defaults;
   // Data key is independent of the app version so upgrading to 2.5 keeps settings.
   const SETTINGS_KEY = 'typinglab_editor_v23';
+
+  function updateAssistHint() {
+    $('assistHint').textContent = 'Giữ ' + TL.nextAssistKey($('key').value) + ' để điền từng chữ.';
+  }
 
   function applySettings(data) {
     for (const id of settingIds) {
@@ -50,6 +54,7 @@
       } else if (typeof value === 'string' || typeof value === 'number') el.value = value;
     }
     $('assistOpt').classList.toggle('hidden', !$('assist').checked);
+    updateAssistHint();
     preview();
   }
   TL.applySettings = applySettings;
@@ -130,6 +135,7 @@
   function initEditor() {
     settingIds.forEach((id) =>
       $(id).addEventListener('change', () => {
+        updateAssistHint();
         preview();
         $('assistOpt').classList.toggle('hidden', !$('assist').checked);
         saveSettings();
@@ -238,7 +244,6 @@
           length: $('condition').value === 'length',
           copy: $('copy').value === 'yes',
           assist: $('assist').checked,
-          assistMode: $('assistMode').value,
           key: $('key').value,
         };
         const source = TL.buildExport(TL.uploaded.source, cfg);

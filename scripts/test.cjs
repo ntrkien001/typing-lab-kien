@@ -188,11 +188,10 @@ console.log('PASS: invalid individual history entries, mobile reset metrics, UTF
 
 // ---- held demonstration key in an exported lesson ----
 context.assistFixture = fixture.replace('<body>', '<body><div class="line"><p class="source">한글</p><textarea id="first"></textarea></div><div class="line"><p class="source">가😀</p><textarea id="second"></textarea></div>');
-function heldKeyLesson(key = 'F8', enabled = true, mode = 'hold') {
+function heldKeyLesson(key = 'F8', enabled = true) {
   context.assistKey = key;
   context.assistEnabled = enabled;
-  context.assistMode = mode;
-  const html = run('TL.buildExport(assistFixture,{simulate:false,copy:false,length:false,assist:assistEnabled,key:assistKey,assistMode})');
+  const html = run('TL.buildExport(assistFixture,{simulate:false,copy:false,length:false,assist:assistEnabled,key:assistKey})');
   const { window: win, document: doc } = parseHTML(html);
   const first = doc.getElementById('first'), second = doc.getElementById('second');
   first.value = second.value = '';
@@ -214,7 +213,8 @@ function heldKeyLesson(key = 'F8', enabled = true, mode = 'hold') {
     clearInterval: (timer) => timers.delete(timer),
   });
   for (const script of doc.querySelectorAll('script')) vm.runInContext(script.textContent, ctx);
-  const keyEvent = (type, value = key, repeat = false) => {
+  const holdKey = { F6: 'F7', F7: 'F8', F8: 'F9', F9: 'F10', F10: 'F6' }[key];
+  const keyEvent = (type, value = holdKey, repeat = false) => {
     const event = new win.Event(type, { bubbles: true, cancelable: true });
     Object.assign(event, { key: value, repeat });
     doc.dispatchEvent(event);
@@ -232,7 +232,7 @@ for (const key of ['F6', 'F7', 'F8', 'F9', 'F10']) {
   assert.equal(demo.first.value, '');
   assert.equal(demo.keyEvent('keydown').defaultPrevented, true);
   assert.equal(demo.first.value, '한'); // one character, never the whole sentence
-  demo.keyEvent('keydown', key, true);
+  demo.keyEvent('keydown', undefined, true);
   assert.equal(demo.first.value, '한');
   assert.equal(demo.timers.size, 1); // OS key repeat cannot create extra timers
   demo.keyEvent('keyup');
@@ -269,25 +269,20 @@ const disabledDemo = heldKeyLesson('F8', false);
 disabledDemo.keyEvent('keydown');
 assert.equal(disabledDemo.first.value, '');
 assert.equal(disabledDemo.timers.size, 0);
-for (const mode of ['full', null]) {
-  for (const key of ['F6', 'F7', 'F8', 'F9', 'F10']) {
-    const demo = heldKeyLesson(key, true, mode);
-    demo.keyEvent('keydown');
-    assert.equal(demo.first.value, '한글');
-    assert.equal(demo.second.value, '');
-    assert.equal(demo.timers.size, 0);
-    demo.keyEvent('keydown', key, true);
-    assert.equal(demo.second.value, ''); // holding never fills subsequent fields in full mode
-    demo.keyEvent('keyup');
-    demo.keyEvent('keydown');
-    assert.equal(demo.second.value, '가😀');
-    assert.deepEqual(demo.inputs, ['한글', '가😀']);
-  }
+for (const key of ['F6', 'F7', 'F8', 'F9', 'F10']) {
+  const demo = heldKeyLesson(key);
+  demo.keyEvent('keydown', key);
+  assert.equal(demo.first.value, '한글');
+  assert.equal(demo.second.value, '');
+  assert.equal(demo.timers.size, 0);
+  demo.keyEvent('keydown', key, true);
+  assert.equal(demo.second.value, ''); // holding never fills subsequent fields in full mode
+  demo.keyEvent('keyup', key);
+  demo.keyEvent('keydown', key);
+  assert.equal(demo.second.value, '가😀');
+  assert.deepEqual(demo.inputs, ['한글', '가😀']);
 }
-// The selected mode persists, and old saved configurations retain full mode.
-run('TL.applySettings(TL.defaults);$("assistMode").value="hold";TL.saveSettings();$("assistMode").value="full";TL.applySettings(JSON.parse(localStorage.getItem("typinglab_editor_v23")))');
-assert.equal($('assistMode').value, 'hold');
-run('TL.applySettings({...TL.defaults,assist:true,key:"F6"})');
-assert.equal($('assistMode').value, 'full');
-assert.equal($('key').value, 'F6');
-console.log('PASS: F6–F10 full/hold modes, legacy default, saved settings, release, repeat suppression, resume, Unicode and focus/IME interruption.');
+run('TL.applySettings({...TL.defaults,assist:true,key:"F10",assistMode:"hold"});TL.saveSettings();TL.applySettings(TL.defaults);TL.applySettings(JSON.parse(localStorage.getItem("typinglab_editor_v23")))');
+assert.equal($('key').value, 'F10');
+assert.match($('assistHint').textContent, /F6/);
+console.log('PASS: F6–F10 paired shortcuts, saved settings, and hold interruption.');
